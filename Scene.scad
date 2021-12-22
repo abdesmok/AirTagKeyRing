@@ -1,47 +1,49 @@
-//w = 31.77;
-//h = 7.9;
-
-$fn = 50;
+$fn = 100;
 
 thickness_x = 2;
-thickness_y = 0.4;
-rounding_radius = 3;
+thickness_y = 1;
+rounding_radius = 5;
+
+tenon_width = 0.8;
+
 spacing = 0.1;
 
-hook_w = 10;
-hook_h = 8;
+hook_w = 12;
+hook_h = 4;
+hook_hole_d = 6;
+hook_ring_d = 38;
 
 airtag_w = 31.9;
 airtag_h = 8;
 
-distance = 0;
+distance = 0.1;
 
 difference() {
     union() {
-//        color("white") AirTag2D();
-//        color("green") Case2D();
         color("white") AirTag();
         
         translate([0, 0, - distance / 2])
         color("green")
             Case_Half1(
-                tx = thickness_x + spacing,
+                tx = max(thickness_x, (tenon_width + spacing) * 2) + spacing,
                 ty = thickness_y + spacing,
                 rr = rounding_radius,
+                tw = tenon_width,
                 s = spacing,
-                hw = hook_w, hh = hook_h);
+                hw = hook_w, hh = hook_h, hhd = hook_hole_d, hrd = hook_ring_d);
                 
         translate([0, 0, distance / 2])
         color("green")
             Case_Half2(
-                tx = thickness_x + spacing,
+                tx = max(thickness_x, (tenon_width + spacing) * 2) + spacing,
                 ty = thickness_y + spacing,
                 rr = rounding_radius,
+                tw = tenon_width,
                 s = spacing,
-                hw = hook_w, hh = hook_h);
+                hw = hook_w, hh = hook_h, hhd = hook_hole_d, hrd = hook_ring_d);
     }
     
-    //translate([0, -30, -30]) cube(60);
+    translate([0, -30, -30]) cube(60);
 }
 
 
@@ -80,6 +82,7 @@ module AirTag() {
         AirTag2D();
 }
 
+
 module Case2D(tx, ty, rr, s) {
     difference() {
         translate([0, - airtag_h / 2 - ty + 1 - 0.7415, 0]) {
@@ -88,8 +91,6 @@ module Case2D(tx, ty, rr, s) {
                 translate([ - tx, - ty, 0]) square([tx, airtag_h + 2 * ty]);
             }
         }
-        
-        AirTag2D(part = 2, delta = s);
     }
 }
 
@@ -103,109 +104,60 @@ module Key2D() {
             ]);
 }
 
-module Case(tx, ty, rr, s) {
+module Case(tx, ty, rr, s, hw, hh, hhd, hrd) {
     difference() {
+        hull() {
+            rotate_extrude(angle = 360)
+                Case2D(tx = tx, ty = ty, rr = rr, s = s);
+            
+            rd = rr * 2;
+            translate([0, - airtag_w / 2 - tx - hh / 2 - hhd / 2, 1 - 0.7415 ]) minkowski() {
+                cube([hw - rd, hh + hhd - rd, airtag_h + ty * 2 - rd], center = true);
+                sphere(rr);
+            }
+        }
+        
         rotate_extrude(angle = 360)
-            Case2D(tx = tx, ty = ty, rr = rr, s = s);
+            AirTag2D(part = 2, delta = s);
             
         linear_extrude(height = 10, convexity = 10)
             circle(d = 16);
             
         translate([0, 0, -10]) linear_extrude(height = 10, convexity = 10)
             scale(1.3) translate([0, -5, 0]) Key2D();
+            
+        translate([0,  - hrd / 2 - airtag_w / 2 - tx - hhd / 2, 0])
+            rotate_extrude(angle = 360)
+                translate([hrd / 2, 0, 0])
+                    circle(d = hhd);
     }
 }
 
-module Hang(tx, ty, rr, s, hw, hh) {
-    x = 0;
-    y = - airtag_w / 2 - tx - hh / 2;
-    z = 1 - 0.7415;
-    rd = rr * 2 * 0 ;
-    minkowski() {
-        translate([x, y, z ])
-            cube([hw - rd, hh - rd, airtag_h + ty * 2 - rd], center = true);
-        sphere(rr);
-    }
-    
-    /*translate([x, y, z ])
-    linear_extrude(airtag_h + ty * 2, center = true)
-    offset(r = -rr) offset(delta = rr)
-    polygon([
-        [-dx, hh / 2 + tx],
-        [dx, hh / 2 + tx],
-        [hw / 2, hh / 2],
-        [hw / 2, 0],
-        [-hw / 2, 0],
-        [-hw / 2, hh / 2],
-    ]);*/
-}
-
-module Hang2(tx, ty, rr, s, hw, hh) {
-    rd = rr * 2;
-    
-    da = 360 / $fn;
-    ang = round(35 / da) * da;
-    dx = sin(ang) * (airtag_w / 2 + tx + rd);
-    dy = cos(ang) * (airtag_w / 2 + tx + rd);
-    dz = airtag_h / 2 + ty - 1 + 0.7415 - rr;
-    
-    #translate([-dx, -dy, -dz])
-        rotate([0, 0, 0])
-        rotate_extrude(angle = 90 - ang)
-        //rotate_extrude()
-            translate([rr * 3, 0, 0])
-            circle(rr);
-}
-
-module Hang3(tx, ty, rr, s, hw, hh) {
-    R = airtag_w / 2 + tx;
-    rd = rr * 2;
-    
-    da = 360 / $fn;
-    ang = round(35 / da) * da;
-    dx = sin(ang) * R;
-    dy = cos(ang) * R;
-    dz = airtag_h / 2 + ty - 1 + 0.7415;
-    
-    minkowski() {
-    linear_extrude(airtag_h + ty * 2)
-    polygon([
-        [-dx, -dy],
-        [ dx, -dy],
-        [  hw / 2, - R],
-        [  hw / 2, - R - hh],
-        [- hw / 2, - R - hh],
-        [- hw / 2, - R],
-    ]);
-    sphere(rr);
-    }
-}
-
-
-module Case_Half1(tx, ty, rr, s, hw, hh) {
+module Case_Half1(tx, ty, rr, tw, s, hw, hh, hhd, hrd) {
     difference() {
-        //hull()
-        union()
-        {
-            Case(tx = tx, ty = ty, rr = rr, s = s);
-            //translate([0, rr, 0]) 
-            //Hang3(tx = tx, ty = ty, rr = rr, s = s, hw = hw, hh = hh);
-        }
+        Case(tx = tx, ty = ty, rr = rr, s = s, hw = hw, hh = hh, hhd = hhd, hrd = hrd);
         
-        translate([-100, -100, 0]) cube(200);
+        w = airtag_w + tx * 2;
+        translate([- w / 2, - w / 2, 0]) cube(w);
+        
+        translate([- s / 2, - w - w / 2 + s / 2, - w / 2]) cube(w);
     }
-    Hang3(tx = tx, ty = ty, rr = rr, s = s, hw = hw, hh = hh);
+
     rotate_extrude(angle = 360)
-        translate([airtag_w / 2 + tx / 2, 0, 0]) square([0.8, 1.8], center = true);
+        translate([airtag_w / 2 + tx / 2, 0, 0]) square([tw, tw * 2], center = true);
 }
 
-module Case_Half2(tx, ty, rr, s, hw, hh) {
+module Case_Half2(tx, ty, rr, tw, s, hw, hh, hhd, hrd) {
     difference() {
-        Case(tx = tx, ty = ty, rr = rr, s = s);
-        translate([-100, -100, -200]) cube(200);
+        Case(tx = tx, ty = ty, rr = rr, s = s, hw = hw, hh = hh, hhd = hhd, hrd = hrd);
+        
+        w = airtag_w + tx * 2;
+        translate([- w / 2, - w / 2, -w]) cube(w);
+        
+        translate([- w + s / 2, - w - w / 2 + s / 2, - w / 2]) cube(w);
         
         rotate_extrude(angle = 360)
-            translate([airtag_w / 2 + tx / 2, 0, 0]) square([1, 2], center = true);
+            translate([airtag_w / 2 + tx / 2, 0, 0]) square([tw + s, (tw + s) * 2], center = true);
     }
     
 }
