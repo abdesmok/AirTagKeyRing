@@ -1,4 +1,5 @@
 part = 0; // [0: Logo, 1: Label, 2: Section, 3: Projection]
+logo = -1; // [-1: None, 0:Circle]
 label = -1; // [-1: None, 0:Circle, 1:Key]
 
 thickness_x = 2;
@@ -7,11 +8,11 @@ rounding_radius = 5;
 
 tenon_width = 0.8;
 
-spacing = 0.25;
+spacing = 0.2;
 
 hook_w = 12;
 hook_h = 4;
-hook_hole_d = 6;
+hook_hole_d = 5;
 hook_ring_d = 30;
 
 airtag_w = 31.9;
@@ -167,9 +168,12 @@ module Case(tx, ty, rr, s, hw, hh, hhd, hrd) {
         rotate_extrude(angle = 360)
             AirTag2D(part = 2, delta = s);
             
-        linear_extrude(height = 10, convexity = 10)
-            circle(d = 16);
-            
+        linear_extrude(height = 10, convexity = 10) {
+            if (logo == 0) {
+                circle(d = 16);
+            }
+        }
+        
         translate([0, 0, -10]) linear_extrude(height = 10, convexity = 10) {
             if (label == 0) {
                 circle(d = 16);
