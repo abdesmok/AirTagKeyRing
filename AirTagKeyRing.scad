@@ -37,7 +37,7 @@ engraving_depth = 0.2;  // [0.1:0.1:10]
 engraving_side = 0;  // [0: Outside, 1: Inside <for transparent material>]
 
 // Used to generate 2D projection images (use orthogonal Top view)
-projection = "NONE"; // ["NONE", "DEFAULT", "FRONT", "BACK", "TOP", "BOTTOM", "LEFT", "RIGHT"]
+projection = "NONE"; // [NONE, DEFAULT, FRONT, BACK, TOP, BOTTOM, LEFT, RIGHT]
 
 /* [Case] */
 
@@ -47,14 +47,14 @@ rounding_radius = 5; // [0:0.1:10]
 
 tenon_width = 0.8; // [0.2:0.1:1.4]
 
-/* [Hook] */
+/* [Hole] */
 
-add_hook = true;
-hook_w = 12; // [0:1:24]
-hook_h = 4; // [0:1:10]
-hook_hole_d = 5; // [1:0.1:10]
-hook_ring_d = 30; // [10:1:50]
-hook_ring_orientation = 0; // [0: Coplanar, 1: Perpendicular]
+add_hole = 1; // [1:true, 0:false]
+hole_width = 12; // [0:1:24]
+hole_height = 4; // [0:1:10]
+hole_diameter = 5; // [1:0.1:10]
+keyring_diameter = 30; // [10:1:50]
+keyring_orientation = 0; // [0: Coplanar, 1: Perpendicular]
 
 /* [AirTag dimensions ] */
 
@@ -121,7 +121,7 @@ module Logo() {
         rr = min(rounding_radius, airtag_h / 2 + thickness_y + spacing - 0.1),
         tw = tenon_width,
         s = spacing,
-        ah = add_hook, hw = hook_w, hh = hook_h, hhd = hook_hole_d, hrd = hook_ring_d, hro = hook_ring_orientation,
+        ah = add_hole, hw = hole_width, hh = hole_height, hd = hole_diameter, krd = keyring_diameter, kro = keyring_orientation,
         lg = logo, ed = engraving_depth, es = engraving_side);
 }
 
@@ -132,7 +132,7 @@ module Label() {
         rr = min(rounding_radius, airtag_h / 2 + thickness_y + spacing - 0.1),
         tw = tenon_width,
         s = spacing,
-        ah = add_hook, hw = hook_w, hh = hook_h, hhd = hook_hole_d, hrd = hook_ring_d, hro = hook_ring_orientation,
+        ah = add_hole, hw = hole_width, hh = hole_height, hd = hole_diameter, krd = keyring_diameter, kro = keyring_orientation,
         ll = label, ed = engraving_depth, es = engraving_side);
 }
 
@@ -147,20 +147,20 @@ module LogoAndLabel(opening = 0) {
 }
 
 module AirTag2D(part = 1, delta = 0) {
-    polygon([
+    polygon(concat([
         for(a = [-90 : 360 / $fn : 0])
-            [cos(a) ^ ((abs(a) + 38) / 128) * (airtag_w / 2 + delta), sin(a) * (3.7415 + delta)],
+            [pow(cos(a), ((abs(a) + 38) / 128)) * (airtag_w / 2 + delta), sin(a) * (3.7415 + delta)]],[
         for(a = [0.17 : 360 / $fn : 33.17])
-            [cos(a) ^ ((abs(a) + 38) / 128) * (airtag_w / 2 + delta), sin(a) * (3.768 + delta)],
-        if (part == 2) [12.83 + delta, sin(33.17) * (3.768 + delta)],
-        if (part == 1) [11.64, sin(33.17) * (3.768 + delta)],
-        if (part == 1) [11.64, 2.5],
-        if (part == 1) [12.83, 2.5],
-        if (part != 3) [12.83 + delta, sin(49) * (3.768 + delta) + 0.575],
+            [pow(cos(a), ((abs(a) + 38) / 128)) * (airtag_w / 2 + delta), sin(a) * (3.768 + delta)]],[
+        if (part == 2) [12.83 + delta, sin(33.17) * (3.768 + delta)]],[
+        if (part == 1) [11.64, sin(33.17) * (3.768 + delta)]],[
+        if (part == 1) [11.64, 2.5]],[
+        if (part == 1) [12.83, 2.5]],[
+        if (part != 3) [12.83 + delta, sin(49) * (3.768 + delta) + 0.575]],[
         for(a = [50.5 : 360 / $fn : 77.5])
-            [cos(a) ^ ((abs(a) + 38) / 128) * (airtag_w / 2 + delta) + 1, sin(a) * (3.768 + delta) + 0.575],
-        [0, airtag_h - 3.7415 + delta],
-    ]);
+            [pow(cos(a), ((abs(a) + 38) / 128)) * (airtag_w / 2 + delta) + 1, sin(a) * (3.768 + delta) + 0.575]],
+        [0, airtag_h - 3.7415 + delta]
+    ));
 }
 
 module AirTag() {
@@ -252,7 +252,7 @@ module label(l, details) {
     }
 }
 
-module Case(tx, ty, rr, s, ah, hw, hh, hhd, hrd, hro, ll, lg, ed, es) {
+module Case(tx, ty, rr, s, ah, hw, hh, hd, krd, kro, ll, lg, ed, es) {
     difference() {
         hull() {
             rotate_extrude(angle = 360)
@@ -260,8 +260,8 @@ module Case(tx, ty, rr, s, ah, hw, hh, hhd, hrd, hro, ll, lg, ed, es) {
                 
             if (ah) {
                 rd = rr * 2;
-                translate([0, - airtag_w / 2 - tx - hh / 2 - hhd / 2, 1 - 0.7415 ]) minkowski() {
-                    cube([max(0.1, hw - rd), max(0.1, hh + hhd - rd), airtag_h + ty * 2 - rd], center = true);
+                translate([0, - airtag_w / 2 - tx - hh / 2 - hd / 2, 1 - 0.7415 ]) minkowski() {
+                    cube([max(0.1, hw - rd), max(0.1, hh + hd - rd), airtag_h + ty * 2 - rd], center = true);
                     sphere(rr);
                 }
             }
@@ -281,22 +281,22 @@ module Case(tx, ty, rr, s, ah, hw, hh, hhd, hrd, hro, ll, lg, ed, es) {
         }
         
         if (ah) {
-            translate([0,  - hrd / 2 - airtag_w / 2 - tx - hhd / 2 - 1, 1 - 0.7415]) rotate([0, hro * 90, 0])
+            translate([0,  - krd / 2 - airtag_w / 2 - tx - hd / 2 - 1, 1 - 0.7415]) rotate([0, kro * 90, 0])
                 rotate_extrude(angle = 360)
-                    translate([hrd / 2, 0, 0])
-                        circle(d = hhd);
+                    translate([krd / 2, 0, 0])
+                        circle(d = hd);
         }
     }
 }
 
-module Case_Logo(tx, ty, rr, tw, s, ah, hw, hh, hhd, hrd, hro, lg, ed, es) {
+module Case_Logo(tx, ty, rr, tw, s, ah, hw, hh, hd, krd, kro, lg, ed, es) {
     difference() {
-        Case(tx = tx, ty = ty, rr = rr, s = s, ah = ah, hw = hw, hh = hh, hhd = hhd, hrd = hrd, hro = hro, ll = -1, lg = lg, ed = ed, es = es);
+        Case(tx = tx, ty = ty, rr = rr, s = s, ah = ah, hw = hw, hh = hh, hd = hd, krd = krd, kro = kro, ll = -1, lg = lg, ed = ed, es = es);
         
-        w = airtag_w + tx * 2 + hro * (hh + hhd + 1) * 2;
+        w = airtag_w + tx * 2 + kro * (hh + hd + 1) * 2;
         translate([- w / 2, - w / 2, -w]) cube(w);
         
-        if (ah && hro == 0) {
+        if (ah && kro == 0) {
             translate([- w + s / 2, - w - w / 2 + s / 2, - w / 2]) cube(w);
         }
         
@@ -306,14 +306,14 @@ module Case_Logo(tx, ty, rr, tw, s, ah, hw, hh, hhd, hrd, hro, lg, ed, es) {
     
 }
 
-module Case_Label(tx, ty, rr, tw, s, ah, hw, hh, hhd, hrd, hro, ll, ed, es) {
+module Case_Label(tx, ty, rr, tw, s, ah, hw, hh, hd, krd, kro, ll, ed, es) {
     difference() {
-        Case(tx = tx, ty = ty, rr = rr, s = s, ah = ah, hw = hw, hh = hh, hhd = hhd, hrd = hrd, hro = hro, ll = ll, lg = -1, ed = ed, es = es);
+        Case(tx = tx, ty = ty, rr = rr, s = s, ah = ah, hw = hw, hh = hh, hd = hd, krd = krd, kro = kro, ll = ll, lg = -1, ed = ed, es = es);
         
-        w = airtag_w + tx * 2 + hro * (hh + hhd + 1) * 2;
+        w = airtag_w + tx * 2 + kro * (hh + hd + 1) * 2;
         translate([- w / 2, - w / 2, 0]) cube(w);
         
-        if (ah && hro == 0) {
+        if (ah && kro == 0) {
             translate([- s / 2, - w - w / 2 + s / 2, - w / 2]) cube(w);
         }
     }

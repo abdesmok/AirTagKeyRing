@@ -14,8 +14,8 @@ LabelKey = -D model=1 -D label=1
 LabelCar = -D model=1 -D label=2
 LabelBag = -D model=1 -D label=3
 Inside = -D engraving_depth=0.5 -D engraving_side=1
-C = -D hook_ring_orientation=0
-P = -D hook_ring_orientation=1
+C = -D keyring_orientation=0
+P = -D keyring_orientation=1
 
 model_files = $(foreach orientation,C P,$(foreach logo,$(logos),$(foreach format,$(3d_formats),output/AirTag-KeyRing-$(orientation)-$(logo).$(format)))) \
               $(foreach orientation,C P,$(foreach label,$(labels),$(foreach format,$(3d_formats),output/AirTag-KeyRing-$(orientation)-$(label).$(format)))) \
@@ -46,7 +46,7 @@ output/AirTag-KeyRing-%: AirTagKeyRing.scad Makefile | output
 	$(oscad) -o $@ $< $($(word 1,$(options))) $($(word 2,$(options))) $($(word 3,$(options))) -D fn=$(fn)
 
 output/AirTag-Case-%: AirTagKeyRing.scad Makefile | output
-	$(oscad) -o $@ $< $($(word 1,$(options))) $($(word 2,$(options))) $($(word 3,$(options))) -D add_hook=false -D fn=$(fn)
+	$(oscad) -o $@ $< $($(word 1,$(options))) $($(word 2,$(options))) $($(word 3,$(options))) -D add_hole=0 -D fn=$(fn)
 
 view = --view=axes,crosshairs,edges,scales,wireframe
 view = 
